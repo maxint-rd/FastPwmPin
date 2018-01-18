@@ -60,7 +60,7 @@ Return value:
    When succesful the method returns the preferred pin as set. If unsuccesful -1 is returned.
 ```
 
-See the enclose example code for more details.
+See the enclosed [example](https://github.com/maxint-rd/FastPwmPin/tree/master/examples/FastPwmPin) for more details.
 
 ### Features & limitations
  - For ATmega 328/168 Timer2 is used. This impacts the tone() function.
