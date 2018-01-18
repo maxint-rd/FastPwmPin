@@ -17,11 +17,16 @@ ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
 
 ### Tested frequencies
+This library has been tested on multiple MCU's under various condititions\*. The generated signal frequency has been measured using different methods. The table below lists frequencies measured\*\*:
+
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4.0 MHz | 31.25 kHz | toggle only on pin 11 and highes frequecies
 ATtiny85 | 1Mzh/8MHz (3v3) | 16.16 MHz | 4.35 kHz | when > 500 kHz fast PLL clock is activated
 ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 39.5 kHz | frequencies > 1.6 MHz are instable
+
+\* *If you tested this library on a different board-setup, please send me your findings, so I can update the table.*<br>
+\*\* *Frequency was measured using UT89C multimeter, DSO112 mini oscilloscope, Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example on 16MHz Nano.*
 
 ### Installation/Usage
 The library can be downloaded from https://github.com/maxint-rd/FastPwmPin. It can be installed as an Arduino library using the Sketch|Library menu. 
@@ -65,18 +70,17 @@ See the enclose example code for more details.
  - At higher frequencies the resolution of the period (duty-cycle) gets more and more limited (converging to 50%) 
 
 ### Credits
-This library is based information found in various sources. See the links below for references.
+- This library is based on information found in various sources. See the links below for references.
 
 ### Links
-- About regular PWM:
+- About regular PWM:<br>
   https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/
-- About register manipulation to enable fast PWM
-  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM
-  http://www.technoblogy.com/show?LE0 - four PWMs on ATtiny85
+- About register manipulation to enable fast PWM<br>
+  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM<br>
+  http://www.technoblogy.com/show?LE0 - (four PWMs on ATtiny85)<br>
   https://www.re-innovation.co.uk/docs/fast-pwm-on-attiny85/
-- About limited modes on certain pins:
+- About limited modes on certain pins:<br>
   https://electronics.stackexchange.com/questions/49401/cant-set-to-fast-pwm-ocra-mode
-  
 
 ### Disclaimer
 - All code on this GitHub account, including this library is provided to you on an as-is basis without guarantees and with all liability dismissed. It may be used at your own risk. Unfortunately I have no means to provide support.
