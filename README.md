@@ -16,6 +16,13 @@ ESP8266 |  |  | NOT SUPPORTED (YET)
 ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
 
+### Tested frequencies
+MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
+------------ | ------------- | ------------- | ------------- | -------------
+ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4.0 MHz | 31.25 kHz | toggle only on pin 11 and highes frequecies
+ATtiny85 | 1Mzh/8MHz (3v3) | 16.16 MHz | 4.35 kHz | when > 500 kHz fast PLL clock is activated
+ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 39.5 kHz | frequencies > 1.6 MHz are instable
+
 ### Installation/Usage
 The library can be downloaded from https://github.com/maxint-rd/FastPwmPin. It can be installed as an Arduino library using the Sketch|Library menu. 
 Just add the zipfile library and the enclosed example should appear in the menu automatically. 
@@ -33,10 +40,19 @@ FastPwmPin::enablePwmPin(11, 4000000L, 50);
 
 The enablePwmPin() method has the following syntax:
 ```
-int FastPwmPin::enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
-nPreferredPin - prefered pin to generate the high frequency signal
-ulFrequency - frequency in Hertz
-nPeriodPercentage - PWM percentage
+int FastPwmPin::enablePwmPin(
+   const int nPreferredPin=0,
+   unsigned long ulFrequency=0L,
+   uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE
+);
+
+Parameters:
+   nPreferredPin - prefered pin to generate the high frequency signal
+   ulFrequency - frequency in Hertz
+   nPeriodPercentage - PWM percentage
+
+Return value:
+   When succesful the method returns the preferred pin as set. If unsuccesful -1 is returned.
 ```
 
 See the enclose example code for more details.
@@ -52,13 +68,15 @@ See the enclose example code for more details.
 This library is based information found in various sources. See the links below for references.
 
 ### Links
-- Learn more about Music Macro Language (MML) on wikipedia:<br>
-   http://en.wikipedia.org/wiki/Music_Macro_Language<br>
-- For downloadable MML music see http://www.archeagemmllibrary.com/<br>
-- Extensive MML reference guide (not all commands supported):<br>
-   http://woolyss.com/chipmusic/chipmusic-mml/ppmck_guide.php<br>
-- Info about using PWM and other methods to generate sound:<br>
-   https://developer.mbed.org/users/4180_1/notebook/using-a-speaker-for-audio-output/
+- About regular PWM:
+  https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/
+- About register manipulation to enable fast PWM
+  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM
+  http://www.technoblogy.com/show?LE0 - four PWMs on ATtiny85
+  https://www.re-innovation.co.uk/docs/fast-pwm-on-attiny85/
+- About limited modes on certain pins:
+  https://electronics.stackexchange.com/questions/49401/cant-set-to-fast-pwm-ocra-mode
+  
 
 ### Disclaimer
 - All code on this GitHub account, including this library is provided to you on an as-is basis without guarantees and with all liability dismissed. It may be used at your own risk. Unfortunately I have no means to provide support.
