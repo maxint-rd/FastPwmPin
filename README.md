@@ -60,7 +60,7 @@ Return value:
    When succesful the method returns the preferred pin as set. If unsuccesful -1 is returned.
 ```
 
-See the enclosed [example](https://github.com/maxint-rd/FastPwmPin/tree/master/examples/FastPwmPin) for more details.
+See the enclosed [example](examples/FastPwmPin) for more details.
 
 ### Features & limitations
  - For ATmega 328/168 Timer2 is used. This impacts the tone() function.
@@ -76,8 +76,8 @@ See the enclosed [example](https://github.com/maxint-rd/FastPwmPin/tree/master/e
 - About regular PWM:<br>
   https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/
 - About register manipulation to enable fast PWM<br>
-  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM<br>
-  http://www.technoblogy.com/show?LE0 - (four PWMs on ATtiny85)<br>
+  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM [original with more graphics](http://www.righto.com/2009/07/secrets-of-arduino-pwm.html)<br>
+  http://www.technoblogy.com/show?LE0 - *"four PWMs on ATtiny85"*<br>
   https://www.re-innovation.co.uk/docs/fast-pwm-on-attiny85/
 - About limited modes on certain pins:<br>
   https://electronics.stackexchange.com/questions/49401/cant-set-to-fast-pwm-ocra-mode
