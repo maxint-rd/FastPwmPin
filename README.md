@@ -2,7 +2,7 @@
 Arduino library to generate a fast PWM signal on an output pin at maximum frequency. Example included.
 
 ### Introduction
-FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a low frequency signal, this library achieves high frequencies using fast timer manipulation. The library produces a PWM signal on an output pin; the frequency and period can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU.
+FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a low frequency signal, this library achieves high frequencies using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and period (duty cycle) can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU.
 
 ### Support for different MCUs
 This library supports generating a high frequency signal on different MCUs such ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
@@ -65,9 +65,10 @@ See the enclosed [example](examples/FastPwmPin) for more details.
 ### Features & limitations
  - For ATmega 328/168 Timer2 is used. This impacts the tone() function.
  - On the ATtiny85 Timer1 is used, which impacts regular PWM output.
- - On the ATtiny85 Timer0 is used. For some cores this impacts the delay() and millis() functions.
+ - On the ATtiny13A Timer0 is used. For some cores this impacts the delay() and millis() functions.
  - The resolution and frequency of the actually generated signal depends on the MCU used. The supplied parameters may be truncated during calculations.
- - At higher frequencies the resolution of the period (duty-cycle) gets more and more limited (converging to 50%) 
+ - At higher frequencies the resolution of the period (duty-cycle) gets more and more limited (converging to 50%).
+ - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
 
 ### Credits
 - This library is based on information found in various sources. See the links below for references.
