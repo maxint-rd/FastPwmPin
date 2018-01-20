@@ -67,7 +67,7 @@ See the enclosed [example](examples/FastPwmPin) for more details.
  - On the ATtiny85 Timer1 is used, which impacts regular PWM output.
  - On the ATtiny13A Timer0 is used. For some cores this impacts the delay() and millis() functions.
  - The resolution and frequency of the actually generated signal depends on the MCU used. The supplied parameters may be truncated during calculations.
- - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clockspeed devided by 256. At higher frequencies the resolution of the duty-cycle gets smaller (converging to 50%). When running the MCU at lower voltages than specified, the higher frequencies may become unstable.
+ - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty-cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
  - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
 
 ### Credits
