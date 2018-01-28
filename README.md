@@ -76,8 +76,10 @@ See the enclosed [example](examples/FastPwmPin) for more details.
 ### Links
 - About regular PWM:<br>
   https://www.arduino.cc/reference/en/language/functions/analog-io/analogwrite/
-- About register manipulation to enable fast PWM<br>
-  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM [original with more graphics](http://www.righto.com/2009/07/secrets-of-arduino-pwm.html)<br>
+- Extensive post about timers and using them for PWM:<br>
+  http://www.gammon.com.au/timers
+- About register manipulation to enable fast PWM:<br>
+  https://www.arduino.cc/en/Tutorial/SecretsOfArduinoPWM \[[original with more graphics](http://www.righto.com/2009/07/secrets-of-arduino-pwm.html)\]<br>
   http://www.technoblogy.com/show?LE0 - *"four PWMs on ATtiny85"*<br>
   https://www.re-innovation.co.uk/docs/fast-pwm-on-attiny85/
 - About limited modes on certain pins:<br>
