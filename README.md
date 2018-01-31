@@ -2,7 +2,7 @@
 Arduino library to generate a fast PWM signal on an output pin at maximum frequency. Example included.
 
 ### Introduction
-FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a low frequency signal, this library achieves high frequencies using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and period (duty cycle) can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU.
+FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a low frequency signal, this library achieves high frequencies using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and duty cycle can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU.
 
 ### Support for different MCUs
 This library supports generating a high frequency signal on different MCUs such ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
@@ -21,7 +21,7 @@ This library has been tested on multiple MCU's under various condititions\*. The
 
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
-ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4.0 MHz | 31.25 kHz | toggle only on pin 11 and highes frequecies
+ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4.0 MHz | 31.25 kHz | toggle only on pin 11 and highest frequencies
 ATtiny85 | 1Mzh/8MHz (3v3) | 16.16 MHz | 4.35 kHz | when > 500 kHz fast PLL clock is activated
 ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 39.5 kHz | frequencies > 1.6 MHz are instable
 
@@ -48,13 +48,13 @@ The enablePwmPin() method has the following syntax:
 int FastPwmPin::enablePwmPin(
    const int nPreferredPin=0,
    unsigned long ulFrequency=0L,
-   uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE
+   uint8_t nDutyPercentage=FASTPWMPIN_TOGGLE
 );
 
 Parameters:
    nPreferredPin - prefered pin to generate the high frequency signal
    ulFrequency - frequency in Hertz
-   nPeriodPercentage - PWM percentage
+   nDutyPercentage - PWM percentage (duty cycle)
 
 Return value:
    When succesful the method returns the preferred pin as set. If unsuccesful -1 is returned.
@@ -67,7 +67,7 @@ See the enclosed [example](examples/FastPwmPin) for more details.
  - On the ATtiny85 Timer1 is used, which impacts regular PWM output.
  - On the ATtiny13A Timer0 is used. For some cores this impacts the delay() and millis() functions.
  - The resolution and frequency of the actually generated signal depends on the MCU used. The supplied parameters may be truncated during calculations.
- - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty-cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
+ - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
  - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
 
 ### Credits
