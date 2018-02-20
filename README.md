@@ -11,7 +11,8 @@ MCU (Board) | Available pins | Timer used | Remarks
 ------------ | ------------- | ------------- | -------------
 ATmega328 ATmega168<br>(Aduino Uno, Nano, Pro Mini) | 3, 11 | Timer2 | Pin 11 only supports toggle mode (50% PWM)
 ATtiny85 | 1, 4 | Timer1 | Pins 0, 3 can also be used, but only inverted (51%-99%)
-ATtiny13A | 0, 1 | Timer0 | Pins 0 only supports toggle mode (50% PWM)
+ATtiny44A | 5,6/7, 8 | Timer1/Timer0 | Pins 6 and 8 only support toggle mode (50% PWM)
+ATtiny13A | 0, 1 | Timer0 | Pin 0 only supports toggle mode (50% PWM)
 ESP8266 |  |  | NOT SUPPORTED (YET)
 ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
@@ -23,6 +24,7 @@ MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4.0 MHz | 31.25 kHz | toggle only on pin 11 and highest frequencies
 ATtiny85 | 1Mzh/8MHz (3v3) | 16.16 MHz | 4.35 kHz | when > 500 kHz fast PLL clock is activated
+ATtiny44A | 8MHz (3v3/5V) | 4.4 MHz | 62 Hz | lowest frequency measured on pin 7 is 32 kHz, on pin 5 it is 123 Hz
 ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 39.5 kHz | frequencies > 1.6 MHz are instable
 
 \* *If you tested this library on a different board-setup, please send me your findings, so I can update the table.*<br>
@@ -66,8 +68,11 @@ See the enclosed [example](examples/FastPwmPin) for more details.
  - For ATmega 328/168 Timer2 is used. This impacts the tone() function.
  - On the ATtiny85 Timer1 is used, which impacts regular PWM output.
  - On the ATtiny13A Timer0 is used. For some cores this impacts the delay() and millis() functions.
- - The resolution and frequency of the actually generated signal depends on the MCU used. The supplied parameters may be truncated during calculations.
+ - On the ATtiny44A Timer0 is used for pins 7 and 8. For some cores this impacts the delay() and millis() functions.
+ - On the ATtiny44A Timer1 is used for pins 5 and 6, which impacts regular PWM output.
+ - The resolution and frequency of the actually generated signal depends on the MCU used. The supplied parameters may be truncated during calculations. The precision of the generated signal depends on this integer truncation as well as on the stability of the MCU clock. A crystal clock is more stable than an RC oscillator or PLL.
  - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
+ - On ATtiny44A the 16-bit Timer1 is also supported, allowing for lower frequencies and for higher PWM precision (at those lower frequencies).
  - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
 
 ### Credits
