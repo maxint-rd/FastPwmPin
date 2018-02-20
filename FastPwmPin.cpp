@@ -231,26 +231,48 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	//			ATtiny44/ATtiny44A
 	//
 	//  ATtiny44A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
-	//  TC0: 8-bit, TC1: 16-bit
-	//  TODO: support 16-bit precision on TC1 (PA6(D6)=OC1A, PA5(D5)=OC1B)
-	//if(nPreferredPin<5 || nPreferredPin>8)
+	//  TC0: 8-bit, TC1: 16-bit (only lower 8-bits used)
+	//  TC1: supports 16-bit precision on PA6/D6 (OC1A) and PA5/D5 (OC1B)
+	// Tested frequencies @8MHz on pin 5: 160 Hz - 4 MHz (+10%)
+	// Tested frequencies @8MHz on pin 6: 80 Hz - 4 MHz (+10%)
 	// Tested frequencies @8MHz on pin 7: 32 kHz - 4 MHz (+10%)
 	// Tested frequencies @8MHz on pin 8: 16 kHz - 4 MHz (+10%)
-	if(nPreferredPin!=7 && nPreferredPin!=8)
+	// Pins 6 and 8 support toggle only
+	if(nPreferredPin<5 || nPreferredPin>8)
+	//if(nPreferredPin!=7 && nPreferredPin!=8)
 		return(-1);
   pinMode(nPreferredPin, OUTPUT);
-	if(nPreferredPin==8)
+	if(nPreferredPin==8 || nPreferredPin==7)
 	{
-		// Like the ATtiny13A, only toggle mode seems to work on OC0A (PB2/D8)
-		// See also https://electronics.stackexchange.com/questions/49401/cant-set-to-fast-pwm-ocra-mode
-		ulFrequency*=2;		// compensate for half frequency in toggle mode
-    TCCR0A = 3<<WGM00 | (0 << COM0A1)| 1<<COM0A0;		// Fast PWM mode 7, Clear OC0A on Compare Match, set OC0A at BOTTOM (non inverting)
+		if(nPreferredPin==8)
+		{
+			// Like the ATtiny13A, only toggle mode seems to work on OC0A (PB2/D8)
+			// See also https://electronics.stackexchange.com/questions/49401/cant-set-to-fast-pwm-ocra-mode
+			ulFrequency*=2;		// compensate for half frequency in toggle mode
+	    TCCR0A = 3<<WGM00 | 1<<COM0A0;		// toggle mode, fast mode 7
+		}
+		else
+			TCCR0A = 3<<WGM00 | (1 << COM0B1)| 0<<COM0B0;		// Fast PWM mode 7, Clear OC0B on Compare Match, set OC0B at BOTTOM (non inverting)
+		TCCR0B  = (1<<WGM02) | (1<<CS00); //  fast mode 7, 1 divider  (f=37300, ==F_CPU/256)
+	  OCR0A = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
+	  OCR0B = (OCR0A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
 	}
 	else
-		TCCR0A = 3<<WGM00 | (1 << COM0B1)| 0<<COM0B0;		// Fast PWM mode 7, Clear OC0B on Compare Match, set OC0B at BOTTOM (non inverting)
-	TCCR0B  = ((1<<WGM02) | (0<<CS02)| (0<<CS01) | (1<<CS00)); //  fast mode 7, 1 divider  (f=37300, ==F_CPU/256)
-  OCR0A = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
-  OCR0B = (OCR0A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+	{
+		if(nPreferredPin==6)
+		{
+			ulFrequency*=2;		// compensate for half frequency in toggle mode
+	    TCCR1A = 3<<WGM10 | 1<<COM1A0;		// toggle mode, fast mode 15
+//	    TCCR1A = 3<<WGM10 | (0 << COM1A1)| 1<<COM1A0;		// Fast PWM mode 15, Clear OC1A on Compare Match, set OC1A at BOTTOM (non inverting)
+		}
+		else
+			TCCR1A = 3<<WGM10 | (1 << COM1B1)| 0<<COM1B0;		// Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non inverting)
+		TCCR1B  = (1<<WGM13) | (1<<WGM12) | (1<<CS10); //  fast mode 15 (TOP in OCR1A) , 1 divider  (f=37300, ==F_CPU/256)
+	  OCR1AH = ((F_CPU/ulFrequency)-1)>>8;
+	  OCR1AL = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
+	  OCR1BH = ((OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1)>>8;
+	  OCR1BL = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+	}
   return(nPreferredPin);
 #else
 #error Unsupported MCU for FastPwmPin
