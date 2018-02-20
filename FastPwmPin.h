@@ -4,14 +4,15 @@
 
 // for the blink example its nice to have LED_BUILTIN defined, also for ATtiny13 and ATtiny85
 #ifndef LED_BUILTIN
-	#if defined(__AVR_ATtiny85__) ||  defined(__AVR_ATtiny13__)
+	#if defined(__AVR_ATtiny85__) ||  defined(__AVR_ATtiny13__) ||  defined(__AVR_ATtiny44__)
 		#define LED_BUILTIN 2
 	#endif
 #endif
+/*
 #if defined(__AVR_ATtiny13__)
 	#define LED_BUILTIN 2
 #endif
-
+*/
 
 #define FASTPWMPIN_TOGGLE 50
 
