@@ -8,11 +8,6 @@
 		#define LED_BUILTIN 2
 	#endif
 #endif
-/*
-#if defined(__AVR_ATtiny13__)
-	#define LED_BUILTIN 2
-#endif
-*/
 
 #define FASTPWMPIN_TOGGLE 50
 
@@ -21,7 +16,6 @@ class FastPwmPin
 	public:
 		FastPwmPin() {};			// constructor
 		static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
-		static int getPwmPin(void);
 }; 
 #endif //__FASTPWMPIN_H__
 

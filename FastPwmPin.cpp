@@ -233,8 +233,8 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	//  ATtiny44A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
 	//  TC0: 8-bit, TC1: 16-bit (only lower 8-bits used)
 	//  TC1: supports 16-bit precision on PA6/D6 (OC1A) and PA5/D5 (OC1B)
-	// Tested frequencies @8MHz on pin 5: 160 Hz - 4 MHz (+10%)
-	// Tested frequencies @8MHz on pin 6: 80 Hz - 4 MHz (+10%)
+	// Tested frequencies @8MHz on pin 5: 124 Hz - 4 MHz (+10%)
+	// Tested frequencies @8MHz on pin 6: 62 Hz - 4 MHz (+10%)
 	// Tested frequencies @8MHz on pin 7: 32 kHz - 4 MHz (+10%)
 	// Tested frequencies @8MHz on pin 8: 16 kHz - 4 MHz (+10%)
 	// Pins 6 and 8 support toggle only
@@ -310,9 +310,5 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 */
     return(-1);
 #endif
-}
-
-int FastPwmPin::getPwmPin(void)
-{
 }
 
