@@ -9,10 +9,10 @@ This library supports generating a high frequency signal on different MCUs such 
 
 MCU (Board) | Available pins | Timer used | Remarks
 ------------ | ------------- | ------------- | -------------
-ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9,10/3,11 | Timer1/Timer2 | Pins 9, 10 16-bit resolution, pins 3, 11 8-bit resolution. Pin 9, 11 only support toggle mode (50% PWM)
-ATmega8A | 9,10/11 | Timer1/Timer2 | Pins 9, 10 16-bit resolution, pin 11 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
-ATtiny85 | 1,3 | Timer1 | Pins 0, 4 can also be used, but only inverted (51%-99%)
-ATtiny44A | 5,6/7,8 | Timer1/Timer0 | Pins 5, 6 16-bit resolution,  pins 7, 8 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
+ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9,10/3,11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pins 3, 11 have 8-bit resolution. Pin 9, 11 only support toggle mode (50% PWM)
+ATmega8A | 9,10/11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pin 11 has 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
+ATtiny85 | 1,3 | Timer1 | Only 8-bit resolution. Pins 0, 4 can also be used, but only inverted (51%-99%)
+ATtiny44A | 5,6/7,8 | Timer1/Timer0 | Pins 5, 6 have16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
 ATtiny13A | 0, 1 | Timer0 | Pin 0 only supports toggle mode (50% PWM)
 ESP8266 |  |  | Minimal implementation using analogWriteFreq() and analogWrite()
 ESP32 |  |  | NOT SUPPORTED (YET)
@@ -23,7 +23,7 @@ This library has been tested on multiple MCU's under various condititions\*. The
 
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
-ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 40 Hz | toggle only at highest frequencies
+ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | toggle only on pin 11 and highest frequencies
 ATmega8A | 8MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
 ATtiny85 | 1Mzh/8MHz (3v3) | 16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
