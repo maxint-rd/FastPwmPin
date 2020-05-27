@@ -2,7 +2,7 @@
 Arduino library to generate a fast PWM signal on an output pin at maximum frequency. Examples included.
 
 ### Introduction
-FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a fixed frequency signal, this library achieves high frequencies using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and duty cycle can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU. While originally aimed at high frequencies, the library can now also generate very low frequencies; depending on the MCU used as low as 1 Hz.
+FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a fixed frequency signal, this library achieves frequencies as high as 4 MHz using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and duty cycle can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU. While originally aimed at high frequencies, the library can now also generate very low frequencies; depending on the MCU used as low as 1 Hz.
 
 ### Support for different MCUs
 This library supports generating a high frequency signal on different MCUs such ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
@@ -69,13 +69,13 @@ Note: To switch a pin fully on or fully off, you must use digitalWrite(). Duty p
 See the enclosed [example](examples/FastPwmPin) for more details.
 
 ### Features & limitations
- - When Timer 0 is used (ATtiny44A/13A) the delay() and millis() functions can be impacted (depending on the core used).
+ - When Timer 0 is used (ATtiny44A/13A) the delay() and millis() functions can be impacted (depending on the core used). For the ATtiny44A an alternative implementation of delay() and millis() that uses the watchdog timer, is included in the library.
  - When Timer1 is used (ATtiny85/44A and ATmega 328/168/8A), regular PWM output is impacted.
  - When Timer2 is used (ATmega 328/168), the tone() function is impacted.
  - The resolution and frequency of the actually generated signal depend on the timer of the MCU used. The supplied parameters are truncated during calculations. The precision of the generated signal depends on this integer truncation as well as on the stability of the MCU clock. A crystal clock is more stable than an RC oscillator or PLL.
  - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
  - On ATtiny44A and ATmega328/168/8A the 16-bit Timer1 is also supported, allowing for lower frequencies and for higher PWM precision (at those lower frequencies).
- - At lower frequencies the prescaler is enabled, allowing for lower frequencies and for higher PWM precision (at those lower frequencies). The frequencies that determine the different prescaler settings were determined through experimentation and are depending on the MCU used. 
+ - At lower frequencies the prescaler is enabled, allowing for lower frequencies and for higher PWM precision (at those lower frequencies). The frequencies that use the different prescaler settings were determined through experimentation and are depending on the MCU used. 
  - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
 
 ### Credits
