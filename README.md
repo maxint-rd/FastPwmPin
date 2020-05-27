@@ -26,8 +26,8 @@ MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 40 Hz | toggle only at highest frequencies
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | toggle only on pin 11 and highest frequencies
 ATmega8A | 8MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
-ATtiny85 | 1Mzh/8MHz (3v3) | 16.16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
-ATtiny44A | 8MHz (3v3/5V) | 4.4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
+ATtiny85 | 1Mzh/8MHz (3v3) | 16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
+ATtiny44A | 8MHz (3v3/5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
 ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 38 Hz | frequencies > 1.6 MHz are instable
 
 \* *If you tested this library on a different board-setup, please send me your findings, so I can update the table.*<br>
