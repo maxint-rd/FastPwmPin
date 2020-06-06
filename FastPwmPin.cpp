@@ -21,7 +21,7 @@
 //  ATtiny13A Fast PWM pins: PB0=OC0A, PB1=OC0B
 //
 
-//   Pinout ATtiny44A
+//   Pinout ATtiny24A/44A/84A
 //                                         +---v---+
 //                                   VCC --|1    14|-- GND
 //           (PCINT8/CLKI/XTAL1) D10/PB0 --|2    13|-- PA0/D0 (ADC0/AREF/PCINT0)
@@ -31,7 +31,7 @@
 //         (PCINT7/ICP/OC0B/ADC7) D7/PA7 --|6     9|-- PA4/D4 (ADC4/USCK/SCL/T1/PCINT4)
 // (PCINT6/OC1A/SDA/MOSI/DI/ADC6) D6/PA6 --|7     8|-- PA5/D5 (ADC5/DO/MISO/OC1B/PCINT5)
 //                                         +-------+
-//  ATtiny44A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
+//  ATtiny24A/44A/84A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
 //
 
 
@@ -41,9 +41,10 @@
 //          (PCINT5/!RESET/ADC0/dW) PB5 --|1     8|-- VCC
 //   (PCINT3/XTAL1/CLK1/!OC1B/ADC3) PB3 --|2     7|-- PB2 (SCK/USCK/SCL/ADC1/T0/INT0/PCINT2)
 //    (PCINT4/XTAL2/CLK0/OC1B/ADC2) PB4 --|3     6|-- PB1 (MISO/DO/AIN1/OC0B/OC1A/PCINT1)
-//                                  GND --|4     5|-- PB0 (MOSI/DI/SDA/AIN0/!OC0A/AREF/PCINT0)
+//                                  GND --|4     5|-- PB0 (MOSI/DI/SDA/AIN0/OC0A/!OC1A/AREF/PCINT0)
 //                                        +-------+
-//  ATtiny85 Fast PWM pins: PB0 (D0)=!OC0A, PB1 (D1)=OC0B/OC1A, PB3 (D4)=!OC1B, PB4 (D3)=OC1B
+//  ATtiny85 Fast PWM pins: PB0 (D0)=!OC1A, PB1 (D1)=OC1A, PB3 (D4)=!OC1B, PB4 (D3)=OC1B
+//  Note currently this library only supports Timer1 on ATtiny85, with pins 0 and 4 as inverted mode pins.
 //  Note: Arduino pin 3 is PB4 and pin 4 is PB3
 //
 
@@ -409,11 +410,11 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
   OCR0B = (OCR0A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
   DDRB |= (1 << nPreferredPin); // pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
-#elif defined(__AVR_ATtiny44__)
+#elif (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))
 	//
-	//			ATtiny44/ATtiny44A
+	//			ATtiny24/24A/44/44A/84/84A
 	//
-	//  ATtiny44A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
+	//  ATtiny24A/44A/84A PWM pins: PB2(D8)=OC0A, PA7(D7)=OC0B, PA6(D6)=OC1A, PA5(D5)=OC1B
 	//  TC0: 8-bit. Note that Timer0 is often used for delay().
 	//  TC1: supports 16-bit precision on PA6/D6 (OC1A) and PA5/D5 (OC1B)
 	// Tested frequencies @8MHz on pin 5: 1 Hz - 4 MHz (+10%)
@@ -536,7 +537,7 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 }
 
 
-#if defined(T44_ENABLE_WDTMILLIS)
+#if defined(TINYX4_ENABLE_WDTMILLIS)
 //#error test
 // Using FastPwmPin on ATtiny44A with pins 7 or 8 uses Timer0, which impacts delay() 
 // Therefore we redefine millis() and delay() to use the watchdog timer instead.
@@ -589,6 +590,6 @@ void wdt_delay(uint16_t ms)
   unsigned long msstart=wdt_millis();
   while(wdt_millis()<msstart+ms);
 } 
-#endif // T44_ENABLE_WDTMILLIS
+#endif // TINYX4_ENABLE_WDTMILLIS
 
 

@@ -19,17 +19,17 @@ class FastPwmPin
 		static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
 };
 
-#if defined(__AVR_ATtiny44__)
-// ATTiny44A uses Timer0 for Fast PWM on pins 7 and 8. This impacts delay() and millis().
+#if (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))
+// ATTiny24A/44A/84A uses Timer0 for Fast PWM on pins 7 and 8. This impacts delay() and millis().
 // To mitigate that, the watchdog timer can be used to replace the original delay() and millis().
-#define T44_ENABLE_WDTMILLIS 1
+#define TINYX4_ENABLE_WDTMILLIS 1
 #endif
-#if defined(T44_ENABLE_WDTMILLIS)
+#if defined(TINYX4_ENABLE_WDTMILLIS)
 uint32_t wdt_millis();
 void wdt_delay(uint16_t ms);
 //#define delay(x) wdt_delay(x)
 //#define millis(x) wdt_millis(x)
-#endif // T44_ENABLE_WDTMILLIS
+#endif // TINYX4_ENABLE_WDTMILLIS
 
 #endif //__FASTPWMPIN_H__
 
