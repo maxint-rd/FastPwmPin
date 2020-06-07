@@ -19,17 +19,17 @@ ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
 
 ### Tested frequencies
-This library has been tested on multiple MCU's under various condititions\*. The generated signal frequency has been measured using different methods. The table below lists frequencies measured\*\*:
+This library has been tested on multiple MCU's under various condititions\*. The generated signal frequency has been measured using different methods\*\*. The table below lists frequencies measured:
 
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
 ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | toggle only on pin 11 and highest frequencies
-ATmega8A | 8MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
-ATtiny85 | 1Mzh/8MHz (3v3) | 16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
-ATtiny84A | 8MHz (5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
-ATtiny44A | 8MHz (3v3/5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
-ATtiny13A | 9.6MHz (3v3) | 1.6 MHz | 38 Hz | frequencies > 1.6 MHz are instable
+ATmega8A | 8 MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
+ATtiny85 | 1 Mzh, 8 MHz (3v3) | 16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
+ATtiny84A | 8 MHz (5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
+ATtiny44A | 8 MHz (3v3/5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
+ATtiny13A | 9.6 MHz (3v3) | 1.6 MHz | 38 Hz | frequencies > 1.6 MHz are instable
 
 \* *If you tested this library on a different board-setup, please send me your findings, so I can update the table.*<br>
 \*\* *Frequency was measured using UT89C multimeter, DSO112 mini oscilloscope, Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example on 16MHz Nano and a logic analyzer (@16MS/s).*
