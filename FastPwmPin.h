@@ -17,6 +17,13 @@ class FastPwmPin
 	public:
 		FastPwmPin() {};			// constructor
 		static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
+	
+	private:
+		static uint8_t findPrescaler(unsigned long ulFrequency, uint8_t nTimer=0);
+		static const uint16_t aPrescale1[];
+#if !defined(__AVR_ATtiny13__) && !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny45__) && !defined(__AVR_ATtiny25__)
+		static const uint16_t aPrescale2[];
+#endif
 };
 
 #if (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))

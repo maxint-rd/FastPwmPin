@@ -36,7 +36,7 @@
 
 
 //
-//   Pinout ATtiny85
+//   Pinout ATtiny85/45/25
 //                                        +---v---+
 //          (PCINT5/!RESET/ADC0/dW) PB5 --|1     8|-- VCC
 //   (PCINT3/XTAL1/CLK1/!OC1B/ADC3) PB3 --|2     7|-- PB2 (SCK/USCK/SCL/ADC1/T0/INT0/PCINT2)
@@ -50,10 +50,16 @@
 
 //  ATmega168/328 Fast PWM pins: PD3(D3)=OC2B, PD5(D5)=OC0B, PD6(D6)=OC0A, PB1(D9)=OC1A, PB2(D10)=OC1B, PB3(D11)=OC2A, 
 //  Timers: TC0:8-bit, TC1:16-bit, TC2:8-bit
+
+//  LGT8F328P (SSOP20) Fast PWM pins: PC6(RST)=OC3A, PD2(D2)=OC3B, PD3(D3)=OC2B, PD5(D5)=OC0B, PD6(D6)=OC0A/OC3A, PB1(D9)=OC1A, PB2(D10)=OC1B, PB3(D11)=OC2A, PE4()=OC0A, PF3()=OC3C/OC0B, PF4()=OC1B, PF5()=OC1A, PF6()=OC2A
+//  Timers: TC0:8-bit, TC1:16-bit, TC2:8-bit
+
 //
 //  ATmega8A Fast PWM pins: PB1(D9)=OC1A, PB2(D10)=OC1B, PB3(D11)=OC2, 
 //  Timers: TC0:8-bit without PWM, TC1:16-bit with PWM, TC2:8-bit with PWM
 //
+//  	// support for 16-bit Timer3 on LGT8F328P (#1=PC6=D5, #2=PD2=D6,
+
 
 #include "FastPwmPin.h"
 
@@ -61,12 +67,56 @@
 #error FastPwmPin does not support ESP8266 (yet)
 #endif
 
+#if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+const uint16_t FastPwmPin::aPrescale1[] = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384};		// prescale settings for ATtiny85/45/25 8-bit Timer1
+#else
+const uint16_t FastPwmPin::aPrescale1[] = {0, 1, 8, 64, 256, 1024};		// prescale settings for ATmega328/168/8A/etc, 8-bit Timer0 and 16-bit Timer1
+#if !defined(__AVR_ATtiny13__)
+const uint16_t FastPwmPin::aPrescale2[] = {0, 1, 8, 32, 64, 128, 256, 1024};		// prescale settings for ATmega328/168/8A/etc, 8-bit Timer2
+#endif
+#endif
+
+uint8_t FastPwmPin::findPrescaler(unsigned long ulFrequency, uint8_t nTimer)
+{	// Find the proper prescale setting for the desired frequency
+  // Top value (OCR1A, OCR2A) is only valid when F_CPU/prescaler/ulFrequency <= 255 for 8-bit or 65535 for 16-bit
+	// Method used is inspired by the PWM library of Mark Cooke: https://github.com/micooke/PWM
+	// Note: Timer2 has more prescale values than Timer0/Timer1
+	//unsigned long ulCnt=F_CPU/ulFrequency;
+	uint8_t nPrescaler=1;
+		// TODO: fix needed for ATtiny85
+#if defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+	// smaller code for tiny85 (actually no real difference when using an optimizer)
+	while(nPrescaler<(sizeof(aPrescale1)/sizeof(uint16_t)-1) && (F_CPU/ulFrequency/aPrescale1[nPrescaler] > 255L))			// Timer1 is 8-bit on ATtiny85
+		nPrescaler++;
+#elif defined(__AVR_ATtiny13__)
+	// smaller code for tiny13 (actually no real difference when using an optimizer)
+	while(nPrescaler<(sizeof(aPrescale1)/sizeof(uint16_t)-1) && (F_CPU/ulFrequency/aPrescale1[nPrescaler] > 255L))			// timer is 8-bit on ATtiny13A
+		nPrescaler++;
+#else
+	switch(nTimer)
+	{
+	case 0:
+	case 1:
+	case 3:			// LGT8F328P has an additional Timer3 which is similar to Timer1 
+		while(nPrescaler<(sizeof(aPrescale1)/sizeof(uint16_t)-1) && (F_CPU/ulFrequency/aPrescale1[nPrescaler] > (nTimer==0? 255L : 65535L)))			// timer 1 is 16-bit with 64K levels
+			nPrescaler++;
+		break;
+	case 2:
+		while(nPrescaler<(sizeof(aPrescale2)/sizeof(uint16_t)-1) && (F_CPU/ulFrequency/aPrescale2[nPrescaler] > 255L))			// timer 2 is 8-bit, but has more prescaler options
+			nPrescaler++;
+		break;
+	}
+#endif
+	return(nPrescaler);
+}	
+
 int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency, uint8_t nPeriodPercentage)		//  nPreferredPin=0
 {	// Enable FastPwm on the desired pin
 	// Note: since not all MCU's support fast PWM on every pin, the nPreferredPin indicates preference
 	// Depending on the MCU a different pin may actually be enabled, pin number is returned
 	// Supported frequencies:
-	// ATmega168@8MHz: 31.25kHz (31250L) - 4.00MHz (4000000L)
+	// LGT8F328P@32MHz, : 1Hz - 8.00MHz (8000000L)
+	// ATmega328@16MHz, ATmega168@8MHz: 1Hz - 4.00MHz (4000000L)
 	// The period (duty-cycle) percentage 1-99%. When larger than 50% the output mode is inverting. The resolution is lower at higher frequencies.
 	
 #if defined (ARDUINO_ARCH_ESP8266)
@@ -87,7 +137,25 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	// Timer2: D3, D11 
 	// Timer1: D9, D10
 	// Timer0: D5, D6
+
+	// Timer3: LGT8F328P D2, D6
+
+	// LGT8F328P PWM3 on pins 2,6
+	// NOTE: For proper support of the LGT8F328P SSOP20 use this PR: https://github.com/LaZsolt/lgt8fx
+	// The 328D-SSOP20 defined in dbuezas/lgt8fx has no proper definition of OCR3A
+/*
+#if defined(OCR3A)			// LGT8F328P PWM3 on pins 2,6
+Serial.println(F("TIMER3!"));
+#else
+Serial.println(F("T_1_2!"));
+#endif
+*/
+
+
 	if((nPreferredPin!=11 && nPreferredPin!=3 && nPreferredPin!=9 && nPreferredPin!=10) || nPeriodPercentage>99 || nPeriodPercentage==0)
+#if defined(OCR3A)			// LGT8F328P PWM3 on pins 2,6
+		if(nPreferredPin!=2 && nPreferredPin!=6)
+#endif
 		return(-1);
 
 	// Pin D3: Timer2, OC2B
@@ -104,26 +172,8 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 
   byte nPrescale=1;  // 1=CK/1 (no prescaling)
   if(nPreferredPin==3 || nPreferredPin==11)
-  {
-	  if(ulFrequency<40000L)
-	  { // prescaling on the 8-bit Timer2 of ATmega328/168 is similar as the ATtiny13A
-	  	if(ulFrequency<512L)
-	  	{
-		  	nPrescale=0x7; 		// 7=CK/1024
-		  	ulFrequency*=1024;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else if(ulFrequency<30000L)
-	  	{
-		  	nPrescale=0x4; 		// 4=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else
-	  	{
-		  	nPrescale=0x2; 		// 2=CK/8,
-		  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-	  	}
-	  }
-		  
+  {	// TIMER0, TIMER2 have 8-bit resolution
+		nPrescale=findPrescaler(ulFrequency, 2);
 		if(nPreferredPin==3)
 		  TCCR2A = 1<<COM2B1 | (nPeriodPercentage>50)<<COM2B0 | 1<<WGM21 | 1<<WGM20;		// Clear/Set (non-inverting), fast mode 7
 		else
@@ -135,47 +185,51 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 			// (proposed solution won't work)
 			ulFrequency*=2;		// compensate for half frequency in toggle mode
 	    TCCR2A = _BV(COM2A0) | _BV(WGM21) | _BV(WGM20);		// toggle mode, fast mode 7
-		  //TCCR2A = 1<<COM2A1 | (nPeriodPercentage>50)<<COM2A0 | 1<<WGM21 | 1<<WGM20;		// Clear/Set (non-inverting), fast mode 7
 	  }
 	  TCCR2B = 1<<WGM22 | nPrescale<<CS20;	// fast mode 7, div/1
-	  OCR2A = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1
+	  // F_CPU/ulFrequency is only valid when result < 255 (OCR2A is 8-bit value)
+	  // On LGT8F328P F_CPU can be 32M, resulting in earlier overflow (at around 128 KHz)
+	  OCR2A = (F_CPU/(ulFrequency*aPrescale2[nPrescale]))-1; // pwm top, F_CPU/freq -1
 	  OCR2B = (OCR2A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1
 	}
-	else 
+	
+	// support for 16-bit Timer3 on LGT8F328P (#1=PC6=D5, #2=PD2=D6,
+	
+	else
+#if defined(OCR3A)			// LGT8F328P PWM3 on pins 2,6
+  if(nPreferredPin==2 || nPreferredPin==6)
+  {	// 16-bit Timer3, same as Timer1
+  	// TODO: should work on pin 2 (OC3B) and pin 6 (OC3A) but doesn't! (perhaps other pin functions override?)
+		nPrescale=findPrescaler(ulFrequency, 3);
+		if(nPreferredPin==2)
+		{
+			ulFrequency*=2;		// compensate for half frequency in toggle mode
+	    TCCR3A = 3<<WGM30 | 1<<COM3A0;		// toggle mode, fast mode 15
+			//TCCR3A = 3<<WGM30 | (1 << COM3A1)| ((nPeriodPercentage>50)<<COM3A0);		// Fast PWM mode 15, Clear OC3B on Compare Match, set OC3B at BOTTOM (non-inverting for Period<=50%)
+		}
+		else
+			//TCCR3A = 3<<WGM30 | 1<<COM3B0;		// toggle mode, fast mode 15
+			TCCR3A = 3<<WGM30 | (1 << COM3B1)| ((nPeriodPercentage>50)<<COM3B0);		// Fast PWM mode 15, Clear OC3B on Compare Match, set OC3B at BOTTOM (non-inverting for Period<=50%)
+		TCCR3B  = (1<<WGM33) | (1<<WGM32) | (nPrescale<<CS30); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
+	  OCR3A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC3A (D0) in WGM mode 3
+	  OCR3B = (OCR3A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR3A)
+	}
+	else
+#endif		
 	{	// 16-bit Timer1, almost identical to Timer1 on ATtiny44A and ATmega8A
-	  byte nPrescale=1;  // 1=CK/1 (no prescaling)
-	 	if(ulFrequency<256L)		// TODO: tested @16MHz, lower F_CPU requires different limits and dividers??? (8Mhz ATmega8 starts prescaling below 128)
-  	{
-		 	if(ulFrequency<16L)
-		 	{
-		  	nPrescale=0x4; 		// 4=CK/256,
-		  	ulFrequency*=256;		// compensate for divided frequency in prescaler mode
-			}
-		 	else if(ulFrequency<32L)
-		 	{
-		  	nPrescale=0x3; 		// 3=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-			}
-		 	else
-		 	{
-		  	nPrescale=0x2; 		// 2=CK/8,
-		  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-		  }
-  	}
+		nPrescale=findPrescaler(ulFrequency, 1);
 
 		if(nPreferredPin==9)
 		{
 			ulFrequency*=2;		// compensate for half frequency in toggle mode
 	    TCCR1A = 3<<WGM10 | 1<<COM1A0;		// toggle mode, fast mode 15
-//	    TCCR1A = 3<<WGM10 | (0 << COM1A1)| 1<<COM1A0;		// Fast PWM mode 15, Clear OC1A on Compare Match, set OC1A at BOTTOM (non inverting)
 		}
 		else
 			TCCR1A = 3<<WGM10 | (1 << COM1B1)| ((nPeriodPercentage>50)<<COM1B0);		// Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
 		TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
-	  OCR1AH = ((F_CPU/ulFrequency)-1)>>8;
-	  OCR1AL = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
-	  OCR1BH = ((OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1)>>8;
-	  OCR1BL = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+		// Calculate top according datasheet formula: Fpwm = Fsys/(Prescale*(1+TOP)) => TOP=Fsys/(Fpwm*Prescale) - 1
+	  OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
+	  OCR1B = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
 	}
 	pinMode(nPreferredPin,OUTPUT);          // Set pin to output
 	return(nPreferredPin);
@@ -202,50 +256,14 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
   byte nPrescale=1;  // 1=CK/1 (no prescaling)
 	if(nPreferredPin==11)
 	{	
-	  if(ulFrequency<40000L)
-	  { // prescaling on the 8-bit Timer2 of ATmega8 is similar to the ATtiny13A
-	  	if(ulFrequency<512L)
-	  	{
-		  	nPrescale=0x7; 		// 7=CK/1024
-		  	ulFrequency*=1024;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else if(ulFrequency<30000L)
-	  	{
-		  	nPrescale=0x4; 		// 4=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else
-	  	{
-		  	nPrescale=0x2; 		// 2=CK/8,
-		  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-	  	}
-	  }
+		nPrescale=findPrescaler(ulFrequency, 2);
 	  TCCR2 = 0<<COM21 | 1<<COM20 | 1<<WGM21 | 0<<WGM20 | nPrescale<<CS20;		// toggle mode COM21:0=1, CTC mode WGM21:0=2
 		ulFrequency*=2;		// compensate for half frequency in toggle mode
-  	OCR2 = (F_CPU/ulFrequency)-1;		// CTC mode freq is F_CPU /2 when OCR2=0
+	  OCR2 = (F_CPU/(ulFrequency*aPrescale2[nPrescale]))-1; // pwm top, F_CPU/freq -1, CTC mode freq is F_CPU /2 when OCR2=0
 	}
 	else
 	{	// 16-bit Timer1, almost identical to Timer1 on ATtiny44A
-	  byte nPrescale=1;  // 1=CK/1 (no prescaling)
-	 	if(ulFrequency<128L)		// TODO: tested @8MHz, lower F_CPU requires different limits and dividers???
-  	{
-		 	if(ulFrequency<16L)
-		 	{
-		  	nPrescale=0x4; 		// 4=CK/256,
-		  	ulFrequency*=256;		// compensate for divided frequency in prescaler mode
-			}
-		 	else if(ulFrequency<32L)
-		 	{
-		  	nPrescale=0x3; 		// 3=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-			}
-		 	else
-		 	{
-		  	nPrescale=0x2; 		// 2=CK/8,
-		  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-		  }
-  	}
-
+		nPrescale=findPrescaler(ulFrequency, 1);
 		if(nPreferredPin==9)
 		{
 			ulFrequency*=2;		// compensate for half frequency in toggle mode
@@ -254,15 +272,12 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 		else
 			TCCR1A = 3<<WGM10 | (1 << COM1B1)| ((nPeriodPercentage>50)<<COM1B0);		// Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
 		TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
-	  OCR1AH = ((F_CPU/ulFrequency)-1)>>8;
-	  OCR1AL = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
-	  OCR1BH = ((OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1)>>8;
-	  OCR1BL = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+	  OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC1A (D0) in WGM mode 3
+	  OCR1B = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
 	}
-  // 
 	pinMode(nPreferredPin,OUTPUT);          // Set pin to output
 	return(nPreferredPin);
-#elif defined(__AVR_ATtiny85__)
+#elif defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
 	//
 	//			ATtiny85
 	//
@@ -274,20 +289,14 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	// http://www.technoblogy.com/show?QVN - waveform generation
   // http://www.technoblogy.com/show?LE0 - four PWMs on ATtiny85
   // https://www.re-innovation.co.uk/docs/fast-pwm-on-attiny85/
-  byte nPrescale=1;  // 1=CK/1 (no prescaling)
-  if(ulFrequency<4000L)
-  { // ATtiny85 has a larger prescale resolution than ATtiny44A, ATtiny13A, ATmega328/168/8A
-  	if(ulFrequency<64L)
-  	{
-	  	nPrescale=0xD; 		// D=CK/4096
-	  	ulFrequency*=4096;		// compensate for divided frequency in prescaler mode
-  	}
-  	else
-  	{
-	  	nPrescale=0x7; 		// 3=CK/4, 7=CK/64
-	  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-  	}
-  }
+  
+  // Tested with
+  // ATtiny85 @ 16MHz (PLL) - ATTinyCore 1.33 - Option Timer 1 Clock: 64MHz/32MHz/CPU. Pin 3: 4Hz - 4MHz.
+  // ATtiny85 @ 8MHz (Internal) - ATTinyCore 1.33 - Option Timer 1 Clock: 64MHz/32MHz/CPU. Pin 3: 2Hz - 4MHz
+  // ATtiny85 @ 1MHz (Internal) - ATTinyCore 1.33 - Option Timer 1 Clock: 64MHz/32MHz/CPU. Pin 3: 1Hz - 4MHz. Pin 4:  1Hz - 4MHz, 50% at F<250KHz 25%PWM<50% 
+	byte nPrescale=findPrescaler(ulFrequency, 1);		// ATtiny85 has 16 prescalers, 1=CK/1 (no prescaling), 15=CK/16384
+//Serial.print(F(":"));
+//Serial.println(nPrescale);
   if(nPreferredPin==4 || nPreferredPin==3)
   {
 	  TCCR1 = 0<<PWM1A | 0<<COM1A0 | nPrescale<<CS10;
@@ -301,7 +310,7 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 		if(nPeriodPercentage>50)
 			TCCR1 |=  3<<COM1A0;		// fix for bug also present in ATtiny85
 		if(nPreferredPin==3) // PWM top/bottom doesn't work on pin D3, only on 4
-		  GTCCR = 1<<PWM1B | 0<<COM1B1 | 1<<COM1B0;			// PWM on B, inverted mode
+		  GTCCR = 1<<PWM1B | 0<<COM1B1 | 1<<COM1B0;			// PWM on B, inverted mode only! (i.e. 90% pwm works okay, 10% is reversed to 90%)
 	}
 	else
   {
@@ -310,7 +319,7 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	  TCCR1 = 1<<PWM1A | 1<<COM1A1  | (nPeriodPercentage>50)<<COM1A0 | nPrescale<<CS10;			// PWM on A, clear/set (non-inverting) or set-clear (inverting) mode
 	  GTCCR = 0<<PWM1B | 0<<COM1B0;
 		if(nPreferredPin==0) // PWM top/bottom doesn't work on pin D0, only on 1
-		  TCCR1 = 1<<PWM1A | 0<<COM1A1  | 1<<COM1A0 | nPrescale<<CS10;			// PWM on A, inverted mode
+		  TCCR1 = 1<<PWM1A | 0<<COM1A1  | 1<<COM1A0 | nPrescale<<CS10;			// PWM on A, inverted mode only! 
 	}
 /*
 	// Using the fast 64MHz PLL clock, the ATtiny85 can generate up to 16Mhz clock signal, even on an 1MHz system clock
@@ -340,8 +349,8 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	}
 	else
 	{
-		#define FASTPWMPIN_TINY85OSC 8000000L
-	  OCR1C = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top
+		//#define FASTPWMPIN_TINY85OSC 8000000L
+	  OCR1C = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
 	  PLLCSR= 0;    // disable ATTiny85 64MHz clock
 	}
   if(nPreferredPin==4 || nPreferredPin==3) OCR1B = (OCR1C+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
@@ -358,25 +367,7 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 		return(-1);
 
   byte nPrescale=1;  // 1=CK/1 (no prescaling)
-  if(ulFrequency<40000L)
-  { 
-  	if(ulFrequency<512L)
-  	{
-	  	nPrescale=0x5; 		// 5=CK/1024
-	  	ulFrequency*=1024;		// compensate for divided frequency in prescaler mode
-  	}
-  	else if(ulFrequency<30000L)
-  	{
-	  	nPrescale=0x3; 		// 3=CK/64,
-	  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-  	}
-  	else
-  	{
-	  	nPrescale=0x2; 		// 2=CK/8,
-	  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-  	}
-  }
-
+	nPrescale=findPrescaler(ulFrequency, 0);
 	if(nPreferredPin==0)  // TODO: only pin==1 seems to work ok
 	{
 	  //TCCR0A = ((1<<WGM00) | (1<<WGM01) | (1 << COM0A1)| ((nPeriodPercentage>50) << COM0A0)) ; // Fast PWM mode 7, Clear OC0A on Compare Match, set OC0A at TOP (non inverting)
@@ -387,7 +378,6 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	}
 	else
 	  TCCR0A = ((1<<WGM00) | (1<<WGM01) | (1 << COM0B1)| ((nPeriodPercentage>50) << COM0B0)) ; // Fast PWM mode 7, Clear OC0B on Compare Match, set OC0B at TOP (non inverting)
-	//TCCR0B  = ((1<<WGM02) | (0<<CS02)| (0<<CS01) | (1<<CS00)); //  fast mode 7, 1 divider  (f=37300, ==F_CPU/256)
 	TCCR0B  = ((1<<WGM02) | (nPrescale<<CS00)); //  fast mode 7, nPrescale divider
 	
 	// pwm OCR0A=0x80, OCR0B=0x7F => f=73.5KHz
@@ -406,7 +396,7 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	// pwm OCR0A=0x02, OCR0B=0x01 => f=3.39MHz
 	// pwm OCR0A=0x02, OCR0B=0x00 => f=3.37MHz (+/-10kHz)
 	// pwm OCR0A=0x01, OCR0B=0x00 => f=5.10MHz (+/-7kHz)
-  OCR0A = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
+  OCR0A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top,  used as BOTTOM for OC0A (D0) in WGM mode 3, F_CPU/freq -1
   OCR0B = (OCR0A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
   DDRB |= (1 << nPreferredPin); // pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
@@ -424,28 +414,10 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 	// Pins 6 and 8 support toggle only
 	if(nPreferredPin<5 || nPreferredPin>8  || nPeriodPercentage>99 || nPeriodPercentage==0)
 		return(-1);
+  byte nPrescale=1;  // 1=CK/1 (no prescaling)
 	if(nPreferredPin==8 || nPreferredPin==7)
 	{	// 8-bit Timer0
-	  byte nPrescale=1;  // 1=CK/1 (no prescaling)
-	  if(ulFrequency<40000L)
-	  { // prescaling on the 8-bit Timer0 of ATtiny44A is similar as the ATtiny13A
-	  	if(ulFrequency<512L)
-	  	{
-		  	nPrescale=0x5; 		// 5=CK/1024
-		  	ulFrequency*=1024;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else if(ulFrequency<30000L)
-	  	{
-		  	nPrescale=0x3; 		// 3=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-	  	}
-	  	else
-	  	{
-		  	nPrescale=0x2; 		// 2=CK/8,
-		  	ulFrequency*=8;		// compensate for divided frequency in prescaler mode
-	  	}
-	  }
-
+		nPrescale=findPrescaler(ulFrequency, 0);
 		if(nPreferredPin==8)
 		{
 			// Like the ATtiny13A, only toggle mode seems to work on OC0A (PB2/D8)
@@ -456,45 +428,22 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 		else
 			TCCR0A = 3<<WGM00 | (1 << COM0B1)| ((nPeriodPercentage>50)<<COM0B0);		// Fast PWM mode 7, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
 		TCCR0B  = (1<<WGM02) | (nPrescale<<CS00); //  fast mode 7, nPrescale divider
-	  OCR0A = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
+	  OCR0A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
 	  OCR0B = (OCR0A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
 	}
 	else
 	{	// 16-bit Timer1
-	  byte nPrescale=1;  // 1=CK/1 (no prescaling)
-	 	if(ulFrequency<128L)
-  	{
-		 	if(ulFrequency<32L)
-		 	{
-		  	nPrescale=0x5; 		// 3=CK/64, 4=CK/256, 5=CK/1024   (on T44@8MHz /256 gave 30Hz minimum on pin 5)
-		  	ulFrequency*=1024;		// compensate for divided frequency in prescaler mode
-			}
-		 	else if(ulFrequency<64L)
-		 	{
-		  	nPrescale=0x4; 		// 4=CK/256,
-		  	ulFrequency*=256;		// compensate for divided frequency in prescaler mode
-			}
-		 	else
-		 	{
-		  	nPrescale=0x3; 		// 3=CK/64,
-		  	ulFrequency*=64;		// compensate for divided frequency in prescaler mode
-		 	}
-  	}
-
+		nPrescale=findPrescaler(ulFrequency, 1);
 		if(nPreferredPin==6)
 		{
 			ulFrequency*=2;		// compensate for half frequency in toggle mode
 	    TCCR1A = 3<<WGM10 | 1<<COM1A0;		// toggle mode, fast mode 15
-//	    TCCR1A = 3<<WGM10 | (0 << COM1A1)| 1<<COM1A0;		// Fast PWM mode 15, Clear OC1A on Compare Match, set OC1A at BOTTOM (non inverting)
 		}
 		else
 			TCCR1A = 3<<WGM10 | (1 << COM1B1)| ((nPeriodPercentage>50)<<COM1B0);		// Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
 		TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
-	  OCR1AH = ((F_CPU/ulFrequency)-1)>>8;
-	  OCR1AL = (F_CPU/ulFrequency)-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
-	  OCR1BH = ((OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1)>>8;
-	  OCR1BL = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
-	  //TCNT1=0;		// reset counter
+	  OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC1A (D0) in WGM mode 3
+	  OCR1B = (OCR1A+1)/(100/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
 	}
   pinMode(nPreferredPin, OUTPUT);
   return(nPreferredPin);
