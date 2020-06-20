@@ -10,6 +10,7 @@ This library supports generating a high frequency signal on different MCUs such 
 MCU (Board) | Available pins | Timer used | Remarks
 ------------ | ------------- | ------------- | -------------
 ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9,10/3,11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pins 3, 11 have 8-bit resolution. Pin 9, 11 only support toggle mode (50% PWM)
+LGT8F328P |  9,10/3,11 | Timer1/Timer2 | Pins 2, 6 for additional 16-bit Timer3 have not been tested working. Fixed core github.com/LaZsolt/lgt8fx is required
 ATmega8A | 9,10/11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pin 11 has 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
 ATtiny85 | 1,3 | Timer1 | Only 8-bit resolution. Pins 0, 4 can also be used, but only inverted (51%-99%)
 ATtiny44A ATtiny84A| 5,6/7,8 | Timer1/Timer0 | Pins 5, 6 have 16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
@@ -24,9 +25,10 @@ This library has been tested on multiple MCU's under various condititions\*. The
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
 ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
+LGT8F328P |32 Mhz (3v3/5V) | 8 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
 ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | toggle only on pin 11 and highest frequencies
 ATmega8A | 8 MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
-ATtiny85 | 1 MHz, 8 MHz (3v3) | 16 MHz | 1 Hz | when > 500 kHz fast PLL clock is activated
+ATtiny85 | 1 MHz, 8 MHz (3v3), 16 MHz | 16 MHz | 1 Hz | when > 250 kHz fast PLL clock is activated, 1 Hz only on 1MHz clock
 ATtiny84A | 8 MHz (5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
 ATtiny44A | 8 MHz (3v3/5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
 ATtiny13A | 9.6 MHz (3v3) | 1.6 MHz | 38 Hz | frequencies > 1.6 MHz are instable
