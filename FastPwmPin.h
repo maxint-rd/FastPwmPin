@@ -5,24 +5,24 @@
 // For the blink example its nice to have LED_BUILTIN defined, also for ATtiny13 and ATtiny85.
 // Depending on the core ATtiny44A may already have LED_BUILTIN as 8.
 #ifndef LED_BUILTIN
-	#if defined(__AVR_ATtiny85__) ||  defined(__AVR_ATtiny13__) ||  defined(__AVR_ATtiny44__)
-		#define LED_BUILTIN 2
-	#endif
+  #if defined(__AVR_ATtiny85__) ||  defined(__AVR_ATtiny13__) ||  defined(__AVR_ATtiny44__)
+    #define LED_BUILTIN 2
+  #endif
 #endif
 
 #define FASTPWMPIN_TOGGLE 50
 
 class FastPwmPin
 {
-	public:
-		FastPwmPin() {};			// constructor
-		static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
-	
-	private:
-		static uint8_t findPrescaler(unsigned long ulFrequency, uint8_t nTimer=0);
-		static const uint16_t aPrescale1[];
+  public:
+    FastPwmPin() {};      // constructor
+    static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
+  
+  private:
+    static uint8_t findPrescaler(unsigned long ulFrequency, uint8_t nTimer=0);
+    static const uint16_t aPrescale1[];
 #if !defined(__AVR_ATtiny13__) && !defined(__AVR_ATtiny85__) && !defined(__AVR_ATtiny45__) && !defined(__AVR_ATtiny25__)
-		static const uint16_t aPrescale2[];
+    static const uint16_t aPrescale2[];
 #endif
 };
 
