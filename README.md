@@ -25,9 +25,9 @@ This library has been tested on multiple MCU's under various condititions\*. The
 
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
 ------------ | ------------- | ------------- | ------------- | -------------
-ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
-LGT8F328P |32 Mhz (3v3/5V) | 8 MHz | 1 Hz | toggle only on pin 9, 11 and highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
-ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | toggle only on pin 11 and highest frequencies
+ATmega328 (Pro Mini) | 16 Mhz (3v3/5V) | 4 MHz | 1 Hz | Toggle only on pin 9, 11 and at highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3
+LGT8F328P |32 Mhz (3v3) | 16 MHz | 1 Hz | Toggle only on pin 1, 9, 11 and at highest frequencies. Lowest frequency is 40 and 80 Hz on pins 11 and 3 (8-bit Timer2). Tested using  QFP32 board.
+ATmega168 (Pro Mini) | 8 Mhz (3v3) | 4 MHz |  | Toggle only on pin 11 and at highest frequencies
 ATmega8A | 8 MHz (5V) | 4 MHz | 1 Hz | best resolution on pins 9, 10
 ATtiny85 | 1 MHz, 8 MHz (3v3), 16 MHz | 16 MHz | 1 Hz | when > 250 kHz fast PLL clock is activated, 1 Hz only on 1MHz clock
 ATtiny84A | 8 MHz (5V) | 4 MHz | 1 Hz | lowest frequency measured on pin 7 is 32 Hz, on pin 5 it is 1 Hz
@@ -76,6 +76,8 @@ See the enclosed [example](examples/FastPwmPin) for more details.
  - When Timer 0 is used (ATtiny84A/44A/13A) the delay() and millis() functions can be impacted (depending on the core used). For the ATtiny84A/44A an alternative implementation of delay() and millis() using the watchdog timer, is included in the library.
  - When Timer1 is used (ATtiny85/84A/44A and ATmega 328/168/8A), regular PWM output is impacted.
  - When Timer2 is used (ATmega 328/168), the tone() function is impacted.
+ - For Timer 3 (LGT8F328P) a fixed core with definition of OCR3A is required. See github.com/LaZsolt/lgt8fx
+ - When Timer3 is used (LGT8F328P) for pin 1 (TX) of the QFP32 board, the serial port cannot be used. WARNING: using this pin for PWM may impact recognition of the Holtec USB chip and may impact flashing firmware! (During my testing a small cap between pin and 3v3 saved unbricked my board).
  - The resolution and frequency of the actually generated signal depend on the timer of the MCU used. The supplied parameters are truncated during calculations. The precision of the generated signal depends on this integer truncation as well as on the stability of the MCU clock. A crystal clock is more stable than an RC oscillator or PLL.
  - The theoretical maximum frequency at full duty cycle resulution (256 levels) is clock speed divided by 256. At higher frequencies the resolution of the duty cycle gets smaller (converging to 50%). When the MCU is running at lower voltages than specified, the higher frequencies may become unstable.
  - On ATtiny84A/44A and ATmega328/168/8A the 16-bit Timer1 is also supported, allowing for lower frequencies and for higher PWM precision (at those lower frequencies).
