@@ -5,19 +5,20 @@ Arduino library to generate a fast PWM signal on an output pin at maximum freque
 FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a fixed frequency signal, this library achieves frequencies as high as 4 MHz using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and duty cycle can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU. While originally aimed at high frequencies, the library can now also generate very low frequencies; depending on the MCU used as low as 1 Hz.
 
 ### Support for different MCUs
-This library supports generating a high frequency signal on different MCUs such ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
+This library supports generating a high frequency signal on different MCUs such as ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
 
 MCU (Board) | Available pins | Timer used | Remarks
 ------------ | ------------- | ------------- | -------------
-ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9,10/3,11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pins 3, 11 have 8-bit resolution. Pin 9, 11 only support toggle mode (50% PWM)
-LGT8F328P |  9,10/3,11 | Timer1/Timer2 | Pins 2, 6 for additional 16-bit Timer3 have not been tested working. Fixed core github.com/LaZsolt/lgt8fx is required
-ATmega8A | 9,10/11 | Timer1/Timer2 | Pins 9, 10 have 16-bit resolution, pin 11 has 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
+ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9*,10 - 3,11* | 16-bit Timer1 - 8-bit Timer2 | Pins 9, 10 have 16-bit resolution, pins 3, 11 have 8-bit resolution. Pin 9, 11 only support toggle mode (50% PWM)
+LGT8F328P |  9*,10 - 3,11* - 1*,2| 16-bit Timer1 - 8-bit Timer2 - 16-bit Timer3| Tested on QFP32 model. Pin 1 not supported on SSOP20. For Timer 3 fixed core github.com/LaZsolt/lgt8fx is required
+ATmega8A | 9*,10 - 11* | Timer1 - Timer2 | Pins 9, 10 have 16-bit resolution, pin 11 has 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
 ATtiny85 | 1,3 | Timer1 | Only 8-bit resolution. Pins 0, 4 can also be used, but only inverted (51%-99%)
-ATtiny44A ATtiny84A| 5,6/7,8 | Timer1/Timer0 | Pins 5, 6 have 16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
+ATtiny44A ATtiny84A| 5,6 - 7,8 | Timer1 - Timer0 | Pins 5, 6 have 16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
 ATtiny13A | 0, 1 | Timer0 | Pin 0 only supports toggle mode (50% PWM)
 ESP8266 |  |  | Minimal implementation using analogWriteFreq() and analogWrite()
 ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
+* *support for toggle mode (50%) only
 
 ### Tested frequencies
 This library has been tested on multiple MCU's under various condititions\*. The generated signal frequency has been measured using different methods\*\*. The table below lists frequencies measured:
