@@ -411,7 +411,12 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
   // pwm OCR0A=0x02, OCR0B=0x00 => f=3.37MHz (+/-10kHz)
   // pwm OCR0A=0x01, OCR0B=0x00 => f=5.10MHz (+/-7kHz)
   OCR0A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top,  used as BOTTOM for OC0A (D0) in WGM mode 3, F_CPU/freq -1
-  OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+  
+  
+  int percentage = (nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);
+  int res = (OCR0A + 1) * percentage / 100 - 1;
+  OCR0B = res; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+  //OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
   DDRB |= (1 << nPreferredPin); // pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
 #elif (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))
