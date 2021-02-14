@@ -306,7 +306,6 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
   // ATtiny85 @ 8MHz (Internal) - ATTinyCore 1.33 - Option Timer 1 Clock: 64MHz/32MHz/CPU. Pin 3: 2Hz - 4MHz
   // ATtiny85 @ 1MHz (Internal) - ATTinyCore 1.33 - Option Timer 1 Clock: 64MHz/32MHz/CPU. Pin 3: 1Hz - 4MHz. Pin 4:  1Hz - 4MHz, 50% at F<250KHz 25%PWM<50% 
   byte nPrescale=findPrescaler(ulFrequency, 1);   // ATtiny85 has 16 prescalers, 1=CK/1 (no prescaling), 15=CK/16384
-
   if(nPreferredPin==4 || nPreferredPin==3)
   {
     TCCR1 = 0<<PWM1A | 0<<COM1A0 | nPrescale<<CS10;
@@ -363,8 +362,13 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     OCR1C = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
     PLLCSR= 0;    // disable ATTiny85 64MHz clock
   }
-  if(nPreferredPin==4 || nPreferredPin==3) OCR1B = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
-  if(nPreferredPin==1 || nPreferredPin==0) OCR1A = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  //  n = a / (100 / b)
+  int percentage = (nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);
+  int res = (OCR1C + 1) * percentage / 100 - 1;
+  // (OCR1C+1)/(100.0/percentage)-1;
+
+  if(nPreferredPin==4 || nPreferredPin==3) OCR1B = res; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  if(nPreferredPin==1 || nPreferredPin==0) OCR1A = res; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
   pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
 #elif defined(__AVR_ATtiny13__)
