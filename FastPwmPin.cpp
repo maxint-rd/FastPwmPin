@@ -362,11 +362,11 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     OCR1C = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
     PLLCSR= 0;    // disable ATTiny85 64MHz clock
   }
-  //  n = a / (100 / b)
+  //  this simple operations swap saves ~ 800 bytes on attiny45 due to avoiding floating point operations
+  //  Please note: i did not change this for other controllers
+  // (OCR1C+1)/(100.0/percentage)-1;
   int percentage = (nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);
   int res = (OCR1C + 1) * percentage / 100 - 1;
-  // (OCR1C+1)/(100.0/percentage)-1;
-
   if(nPreferredPin==4 || nPreferredPin==3) OCR1B = res; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
   if(nPreferredPin==1 || nPreferredPin==0) OCR1A = res; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
   pinMode(nPreferredPin,OUTPUT);          // Set pin to output
