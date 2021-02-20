@@ -13,8 +13,8 @@ ATmega328 ATmega168<br>(Arduino Uno, Nano, Pro Mini) | 9*,10 - 3,11* | 16-bit Ti
 LGT8F328P |  9*,10 - 3,11* - 1*,2| 16-bit Timer1 - 8-bit Timer2 - 16-bit Timer3| Tested on QFP32 model. Pin 1 not supported on SSOP20. For Timer 3 fixed core github.com/LaZsolt/lgt8fx is required
 ATmega8A | 9*,10 - 11* | Timer1 - Timer2 | Pins 9, 10 have 16-bit resolution, pin 11 has 8-bit resolution. Pins 9, 11 toggle mode only (50% PWM)
 ATtiny85 | 1,3 | Timer1 | Only 8-bit resolution. Pins 0, 4 can also be used, but only inverted (51%-99%)
-ATtiny44A ATtiny84A| 5,6 - 7,8 | Timer1 - Timer0 | Pins 5, 6 have 16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
-ATtiny13A | 0, 1 | Timer0 | Pin 0 only supports toggle mode (50% PWM)
+ATtiny44A ATtiny84A| 5,6* - 7,8* | Timer1 - Timer0 | Pins 5, 6 have 16-bit resolution,  pins 7, 8 have 8-bit resolution. Pins 6 and 8 only support toggle mode (50% PWM)
+ATtiny13A | 0*, 1 | Timer0 | Pin 0 only supports toggle mode (50% PWM)
 ESP8266 |  |  | Minimal implementation using analogWriteFreq() and analogWrite()
 ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
