@@ -186,7 +186,10 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     // F_CPU/ulFrequency is only valid when result < 255 (OCR2A is 8-bit value)
     // On LGT8F328P F_CPU can be 32M, resulting in earlier overflow (at around 128 KHz)
     OCR2A = (F_CPU/(ulFrequency*aPrescale2[nPrescale]))-1; // pwm top, F_CPU/freq -1
-    OCR2B = (OCR2A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1; thanks @cesarab for more accuracy!
+    //OCR2B = (OCR2A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1; thanks @cesarab for more accuracy!
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR2A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 840 bytes on ATmega328, thanks @shaddyx for the suggestion!
+    OCR2B=ulResult;
   }
   
   else
@@ -222,7 +225,10 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     }
     TCCR3B  = (1<<WGM33) | (1<<WGM32) | (nPrescale<<CS30); //  fast mode 15 (TOP in OCR3A) , nPrescale divider
     OCR3A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC3A (D1) in WGM mode 3
-    OCR3B = (OCR3A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR3A)
+    //OCR3B = (OCR3A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR3A)
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR3A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 840 bytes on ATmega328, thanks @shaddyx for the suggestion!
+    OCR3B=ulResult;
       
     return(nPreferredPin);  // return now, to avoid resetting pin to output.
   }
@@ -240,7 +246,10 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
     // Calculate top according datasheet formula: Fpwm = Fsys/(Prescale*(1+TOP)) => TOP=Fsys/(Fpwm*Prescale) - 1
     OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC0A (D0) in WGM mode 3
-    OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+    //OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR1A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 840 bytes on ATmega328, thanks @shaddyx for the suggestion!
+    OCR1B=ulResult;
   }
   pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
@@ -283,8 +292,11 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     else
       TCCR1A = 3<<WGM10 | (1 << COM1B1)| ((nPeriodPercentage>50)<<COM1B0);    // Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
     TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
-    OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC1A (D0) in WGM mode 3
-    OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+    //OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC1A (D0) in WGM mode 3
+    //OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR1A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 826 bytes on ATmega8A, thanks @shaddyx for the suggestion!
+    OCR1B=ulResult;
   }
   pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
@@ -363,8 +375,12 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
     OCR1C = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
     PLLCSR= 0;    // disable ATTiny85 64MHz clock
   }
-  if(nPreferredPin==4 || nPreferredPin==3) OCR1B = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
-  if(nPreferredPin==1 || nPreferredPin==0) OCR1A = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  //if(nPreferredPin==4 || nPreferredPin==3) OCR1B = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  //if(nPreferredPin==1 || nPreferredPin==0) OCR1A = (OCR1C+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+  unsigned long ulResult = ((OCR1C + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 866 bytes on ATtiny85, thanks @shaddyx for the suggestion!
+  if(nPreferredPin==4 || nPreferredPin==3) OCR1B = ulResult; // pwm bottom for pin D4, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
+  if(nPreferredPin==1 || nPreferredPin==0) OCR1A = ulResult; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1C)
   pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
 #elif defined(__AVR_ATtiny13__)
@@ -407,7 +423,12 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
   // pwm OCR0A=0x02, OCR0B=0x00 => f=3.37MHz (+/-10kHz)
   // pwm OCR0A=0x01, OCR0B=0x00 => f=5.10MHz (+/-7kHz)
   OCR0A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top,  used as BOTTOM for OC0A (D0) in WGM mode 3, F_CPU/freq -1
-  OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+  //OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+  unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+  unsigned long ulResult = ((OCR0A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 870 bytes on ATtiny13A
+  OCR0B=ulResult;
+
+
   DDRB |= (1 << nPreferredPin); // pinMode(nPreferredPin,OUTPUT);          // Set pin to output
   return(nPreferredPin);
 #elif (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))
@@ -439,7 +460,10 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
       TCCR0A = 3<<WGM00 | (1 << COM0B1)| ((nPeriodPercentage>50)<<COM0B0);    // Fast PWM mode 7, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
     TCCR0B  = (1<<WGM02) | (nPrescale<<CS00); //  fast mode 7, nPrescale divider
     OCR0A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1
-    OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+    //OCR0B = (OCR0A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom for pin D1, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR0A)
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR0A + 1) * ulPercentage * 10L ) / 1000L -1;    // using integer calculation instead of floating point saves 750 bytes on ATtiny44A, thanks @shaddyx for the suggestion!
+    OCR0B=ulResult;
   }
   else
   { // 16-bit Timer1
@@ -453,7 +477,22 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
       TCCR1A = 3<<WGM10 | (1 << COM1B1)| ((nPeriodPercentage>50)<<COM1B0);    // Fast PWM mode 15, Clear OC0B on Compare Match, set OC0B at BOTTOM (non-inverting for Period<=50%)
     TCCR1B  = (1<<WGM13) | (1<<WGM12) | (nPrescale<<CS10); //  fast mode 15 (TOP in OCR1A) , nPrescale divider
     OCR1A = (F_CPU/(ulFrequency*aPrescale1[nPrescale]))-1; // pwm top, F_CPU/freq -1 // pwm top, used as BOTTOM for OC1A (D0) in WGM mode 3
-    OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+//Serial.print("Freq: ");
+//Serial.print(ulFrequency);
+//Serial.print(", perc: ");
+//Serial.print(nPeriodPercentage);
+//Serial.print(", OCR1A: ");
+//Serial.print(OCR1A);
+//    OCR1B = (OCR1A+1)/(100.0/(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage))-1; // pwm bottom, determines duty cycle, for 50%: (top+1)/2-1 (should be below top in OCR1A)
+//Serial.print(", Floated: ");
+//Serial.print(OCR1B);
+    //if(nPeriodPercentage>50) nPeriodPercentage=100-nPeriodPercentage;
+    //OCR1B=((OCR1A + 1) * (nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage) * 10L ) / 1000L -1;
+    unsigned long ulPercentage=(nPeriodPercentage>50?(100-nPeriodPercentage):nPeriodPercentage);  // using a local variables gives smaller code after optimization
+    unsigned long ulResult = ((OCR1A + 1) * ulPercentage * 10L ) / 1000L -1;
+    OCR1B=ulResult;
+//Serial.print(", OCR1B: ");
+//Serial.println(OCR1B);
   }
   pinMode(nPreferredPin, OUTPUT);
   return(nPreferredPin);
