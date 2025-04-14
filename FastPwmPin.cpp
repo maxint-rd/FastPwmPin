@@ -207,11 +207,11 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
       TCCR3A = 3<<WGM30 | 1<<COM3A0;    // toggle mode, fast mode 15
 
       // NOTE: On model QFP32 using OC3A on pin 1 disables using Serial TX on pin 1! Alternative Serial2 seems not supported (yet).
-      // On model FPQ32, OC3A is on PF!, via shared pin PD1 (D1/TX). To enable it, PD1 needs to be disabled (set as input) and PF1 as output
+      // On model FPQ32, OC3A is on PF1, via shared pin PD1 (D1/TX). To enable it, PD1 needs to be disabled (set as input) and PF1 as output
       // On models SSOP20, OC3A is on PF1, via shared pin #1 (PC6/RST). To enable it, PC6 needs to be disabled (set as input) and PF1 as output
       // For now OC3A/pin 1 is only supported on model QFP32
       // WARNING: using TX for high frequency PWM may hamper recognition of the Holtec USB chip and brick your board! 
-      // When my board failed to flash, I used a small cap between pin 1 and 3V3 to block the high-freq. signal and succefully flashed the board.
+      // When my board failed to flash, I used a small cap between pin 1 and 3V3 to block the high-freq. signal and succesfully flashed the board.
       DDRD&= ~_BV(1);
       DDRF|=_BV(1);
     }
@@ -534,6 +534,47 @@ int FastPwmPin::enablePwmPin(const int nPreferredPin, unsigned long ulFrequency,
 #endif
 }
 
+void FastPwmPin::disablePwmPin(const int nPin, uint8_t nPinState)
+{ // nPinState=LOW
+  // Using digitalWrite should should disable PWM, but isn't implemented for all pins. See issue #9 (https://github.com/maxint-rd/FastPwmPin/issues/9#issuecomment-2795253490)
+#if defined(__AVR_ATmega168P__)  ||  defined (__AVR_ATmega168__) || defined (__AVR_ATmega328P__) ||  defined (__AVR_ATmega328__)
+  // disable PWM on toggle-pins 9/11
+  if(nPin==9)
+    cbi(TCCR1A, COM1A0);   // shut off PWM on pin 9
+  else if(nPin==11)
+    cbi(TCCR2A, COM2A0);   // shut off PWM on pin 11
+#if defined(OCR3A)      // LGT8F328P PWM3 on pins 1,2. Pin-sharing needs special attention for both pins.
+  else if(nPin==1)
+  {
+    cbi(TCCR3A, COM3A0);   // shut off PWM on pin 1
+    // On model FPQ32, OC3A is on PF1, via shared pin PD1 (D1/TX). To disable it, PF1 needs to be disabled (set as input) and PD1 as output
+    // On models SSOP20, OC3A is on PF1, via shared pin #1 (PC6/RST). To disable it, PF1 needs to be disabled (set as input) and PC6 as output
+    // For now OC3A/pin 1 is only supported on model QFP32
+    DDRF&= ~_BV(1);   // pinMode(1, INPUT);
+    DDRD|=_BV(1);
+  }
+  else if(nPin==2)
+  {
+    cbi(TCCR3A, COM3B1);   // shut off PWM on pin 2
+    cbi(TCCR3A, COM3B0);   // shut off PWM on pin 2
+
+    // On models SSOP20 and QFP32, OC3B is on PF2, via shared pin D2 (PD2). To disable it, PF2 needs to be disabled (set as input) and PD2 as output
+    DDRF&= ~_BV(2);   // pinMode(2, INPUT);
+    DDRD|=_BV(2);
+  }
+#endif
+
+#elif defined (__AVR_ATmega8__)
+  // TODO: toggle pins are 9, 11
+#elif defined(__AVR_ATtiny85__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny25__)
+  // TODO: check inverted pins 0, 4
+#elif defined(__AVR_ATtiny13__)
+  // TODO: toggle pin is 0
+#elif (defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__))
+  // TODO: toggle pins are 6, 8
+#endif
+  digitalWrite(nPin, nPinState); // Using digitalWrite should should disable PWM
+}
 
 #if defined(TINYX4_ENABLE_WDTMILLIS)
 //#error test

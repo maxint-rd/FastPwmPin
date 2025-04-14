@@ -12,11 +12,26 @@
 
 #define FASTPWMPIN_TOGGLE 50
 
+// macro used for disabling PWM on a pin. Resets the specified bit of the specific register
+#if !defined(cbi)
+   #define cbi(reg,bit) (reg &= ~(_BV(bit)))
+#endif
+
 class FastPwmPin
 {
   public:
     FastPwmPin() {};      // constructor
+    /** Enable fast PWM on the preferred pin. Try to set frequency and period as close as possible 
+    *   @arg const int nPreferredPin - the preferred pin to be used (returns -1 if not available for PWM)
+    *   @arg unsigned long ulFrequency - e.g. 250000L for 250 kHz
+    *   @arg uint8_t nPeriodPercentage - 1-99 percentage of dutycycle. Default is 50%
+    */ 
     static int enablePwmPin(const int nPreferredPin=0, unsigned long ulFrequency=0L, uint8_t nPeriodPercentage=FASTPWMPIN_TOGGLE);
+    /** Disable PWM on the indicated pin. Should be a previously enabled pin 
+    *   @arg const int nPin - the pin for PWM to be disabled
+    *   @arg uint8_t nPinState - state of pin after disabling. Default is LOW.
+    */
+    static void disablePwmPin(const int nPin, uint8_t nPinState=LOW);
   
   private:
     static uint8_t findPrescaler(unsigned long ulFrequency, uint8_t nTimer=0);
