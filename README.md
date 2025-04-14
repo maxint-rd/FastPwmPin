@@ -1,10 +1,10 @@
 # FastPwmPin
 Arduino library to generate a fast PWM signal on an output pin at maximum frequency. Examples included.
 
-### Introduction
+## Introduction
 FastPwmPin provides a means to generate a high frequency PWM signal on one specific output pin. Where the regular Arduino analogWrite() function allows for generating a fixed frequency signal, this library achieves frequencies as high as 4 MHz using fast timer manipulation. The library produces a PWM signal on a single output pin. The frequency and duty cycle can be selected. The library supports multiple MCU's. The capabilities depend on the specific MCU. While originally aimed at high frequencies, the library can now also generate very low frequencies; depending on the MCU used as low as 1 Hz.
 
-### Support for different MCUs
+## Support for different MCUs
 This library supports generating a high frequency signal on different MCUs such as ATmega 328, 168 and ATtiny85. Depending on the MCU, it uses different timers and registers to produce the high frequency signal. The table below gives an overview:
 
 MCU (Board) | Available pins | Timer used | Remarks
@@ -20,7 +20,7 @@ ESP32 |  |  | NOT SUPPORTED (YET)
 STM32 |  |  | NOT SUPPORTED (YET)
 * *support for toggle mode (50%) only
 
-### Tested frequencies
+## Tested frequencies
 This library has been tested on multiple MCU's under various condititions\*. The generated signal frequency has been measured using different methods\*\*. The table below lists frequencies measured:
 
 MCU (Board) | Clock (voltage) | Highest frequency | Lowest frequency | Remarks
@@ -37,22 +37,22 @@ ATtiny13A | 9.6 MHz (3v3) | 1.6 MHz | 38 Hz | frequencies > 1.6 MHz are instable
 \* *If you tested this library on a different board-setup, please send me your findings, so I can update the table.*<br>
 \*\* *Frequency was measured using UT89C multimeter, DSO112 mini oscilloscope, Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example on 16MHz Nano and a logic analyzer (@16MS/s).*
 
-### Installation/Usage
+## Installation/Usage
 The library can be downloaded from https://github.com/maxint-rd/FastPwmPin. It can be installed as an Arduino library using the Sketch|Library menu. 
 Just add the zipfile library and the enclosed example should appear in the menu automatically. 
 
-Initialisation before Setup():
+Initialisation before `Setup()`:
 ```
   // include header
   #include <FastPwmPin.h>
 ```
-
-Then to initialize the high frequency signal, call the enablePwmPin() method in Setup():
+### Enable PWM on a pin
+To initialize the high frequency signal, call the `enablePwmPin()` method in `Setup()`:
 ```
 FastPwmPin::enablePwmPin(11, 4000000L, 50);
 ```
 
-The enablePwmPin() method has the following syntax:
+The `enablePwmPin()` method has the following syntax:
 ```
 int FastPwmPin::enablePwmPin(
    const int nPreferredPin=0,
@@ -68,12 +68,29 @@ Parameters:
 Return value:
    When succesful the method returns the preferred pin as set. If unsuccesful -1 is returned.
 ```
-Note: To switch a pin fully on or fully off, you must use digitalWrite(). Duty percentages of 100 and 0 result in -1 error return value.
+Note: To switch a pin fully on or fully off, you can use the `disablePwmPin()` method (see below). Duty percentages of 100 and 0 result in -1 error return value.
 
 See the enclosed [example](examples/FastPwmPin) for more details.
 
-### Features & limitations
- - When Timer 0 is used (ATtiny84A/44A/13A) the delay() and millis() functions can be impacted (depending on the core used). For the ATtiny84A/44A an alternative implementation of delay() and millis() using the watchdog timer, is included in the library.
+### Disable PWM on a pin
+In case you want to disable PWM you can call the `disablePwmPin()` method:
+```
+FastPwmPin::disablePwmPin(11);
+```
+
+The `disablePwmPin()` method has the following syntax:
+```
+void FastPwmPin::disablePwmPin(const int nPin, uint8_t nPinState=LOW);
+
+Parameters:
+  nPin - the pin for PWM to be disabled
+  nPinState - state of pin after disabling. Default is LOW.
+```
+
+Note: Be sure to use the same pin number that was returned by the `enablePwmPin()` method.
+
+## Features & limitations
+ - When Timer 0 is used (ATtiny84A/44A/13A) the `delay()` and `millis()` functions can be impacted (depending on the core used). For the ATtiny84A/44A an alternative implementation of delay() and millis() using the watchdog timer, is included in the library.
  - When Timer1 is used (ATtiny85/84A/44A and ATmega 328/168/8A), regular PWM output is impacted.
  - When Timer2 is used (ATmega 328/168), the tone() function is impacted.
  - For Timer 3 (LGT8F328P) a fixed core with definition of OCR3A is required. See github.com/LaZsolt/lgt8fx
@@ -83,6 +100,7 @@ See the enclosed [example](examples/FastPwmPin) for more details.
  - On ATtiny84A/44A and ATmega328/168/8A the 16-bit Timer1 is also supported, allowing for lower frequencies and for higher PWM precision (at those lower frequencies).
  - At lower frequencies the prescaler is enabled, allowing for lower frequencies and for higher PWM precision (at those lower frequencies). The frequencies that use the different prescaler settings were determined through experimentation and are depending on the MCU used. 
  - The stability (jitter) of the generated signal depends on the MCU and the selected frequency and duty cycle. In testing the ATtiny13A showed more jitter than the ATtiny85 at higher frequencies. The jitter can easily be measured using the Arduino [FreqCount](https://github.com/PaulStoffregen/FreqCount/tree/master/examples/Serial_Output) serial example an the serial plotter of the Arduino IDE.
+ - Disabling PWM may not work for all pins. Toggle-only pins were found to have issues. For the ATmega328P (Uno/Nano/Pro-mini), ATmega168 (some Nano clones) and the LGT8F328P this was resolved. Other MCU's such as ATtiny still need to be tested.
 
 ### Credits
 - This library is based on information found in various sources. See the links below for references.
